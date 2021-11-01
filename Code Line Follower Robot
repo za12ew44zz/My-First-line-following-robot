@@ -1,0 +1,208 @@
+#define BLYNK_TEMPLATE_ID           ""
+#define BLYNK_DEVICE_NAME           ""
+#define BLYNK_AUTH_TOKEN            ""
+#include <TridentTD_LineNotify.h>
+
+
+
+#define BLYNK_PRINT Serial
+#define LINE_TOKEN  "AXhuoAtIJ7qZiK0Sr7EHL9s2XUvkg2ueHFP7RC0BZlX"
+
+#define echoPin 27
+#define trigPin 26 
+
+#include <analogWrite.h>
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
+
+char auth[] = BLYNK_AUTH_TOKEN;
+
+
+char ssid[] = "";
+char pass[] = "";
+
+
+int val;
+
+long duration; 
+int distance; 
+
+BLYNK_WRITE(V0){
+  val = param.asInt();
+  Serial.println(val);
+  if(val == 255){
+    LINE.notify("Too slow");
+  }
+  else if(val == 0){
+    LINE.notify("Too Fast");
+  }
+  
+}
+
+int en1 = 12;
+int in1 = 13;
+int in2 = 15;
+
+int en2 = 2;
+int in3 = 22;
+int in4 = 21;
+
+
+int ir1 = 37;
+int ir2 = 39;
+
+
+int speed = 170;
+
+void fd(){
+ analogWrite(en1, val);
+ analogWrite(en2, val);
+ digitalWrite(in1, HIGH);
+ digitalWrite(in2, LOW);
+ digitalWrite(in3, HIGH);
+ digitalWrite(in4, LOW);
+}
+
+void bw(){
+ analogWrite(en1, val);
+ analogWrite(en2, val);
+ digitalWrite(in1, HIGH);
+ digitalWrite(in2, LOW);
+
+ 
+ digitalWrite(in3, HIGH);
+ digitalWrite(in4, LOW);
+}
+
+
+void tl(){
+// analogWrite(en1, 0);
+ analogWrite(en2, val);
+ digitalWrite(in1, LOW);
+ digitalWrite(in2, LOW);
+
+ 
+ digitalWrite(in3, HIGH);
+ digitalWrite(in4, LOW);
+}
+
+void tr(){
+ analogWrite(en1, val);
+// analogWrite(en2, 0);
+ digitalWrite(in1, HIGH);
+ digitalWrite(in2, LOW);
+
+ 
+ digitalWrite(in3, LOW);
+ digitalWrite(in4, LOW);
+}
+
+void stopMotor(){
+ 
+ digitalWrite(in1, LOW);
+ digitalWrite(in2, LOW);
+
+ 
+ digitalWrite(in3, LOW);
+ digitalWrite(in4, LOW);
+}
+
+
+void ultra(){
+  
+
+  Serial.println(distance);
+  LINE.notify("Something ahead");
+    
+  analogWrite(en1, 0);
+  analogWrite(en2, 0);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+
+  
+
+}
+
+void setup()
+{
+
+  Serial.begin(115200);
+  pinMode(trigPin, OUTPUT); 
+  pinMode(echoPin, INPUT); 
+
+  //Blynk.begin(auth, ssid, pass);
+  // You can also specify server:
+  Blynk.begin(auth, ssid, pass, "blynk.cloud", 80);
+  //Blynk.begin(auth, ssid, pass, IPAddress(192,168,1,100), 8080);
+  LINE.setToken(LINE_TOKEN);
+  LINE.notify("Robot is working");
+
+
+pinMode(en1, OUTPUT);
+pinMode(in1, OUTPUT);
+pinMode(in2, OUTPUT);
+
+pinMode(en2, OUTPUT);
+pinMode(in3, OUTPUT);
+pinMode(in4, OUTPUT);
+
+pinMode(ir1, INPUT);
+pinMode(ir2, INPUT);
+Serial.println("ok");
+}
+
+void loop()
+{
+  Blynk.run();
+  
+  int ir1_state = digitalRead(ir1);
+  int ir2_state = digitalRead(ir2);
+
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration * 0.034 / 2;
+  
+  Serial.println(distance);
+  if(distance > 10){
+    if((ir1_state == LOW) && (ir2_state == LOW)){
+    
+    fd();
+  }
+  else if((digitalRead(ir1) == LOW) && (digitalRead(ir2) == HIGH)){
+    tr();
+  }
+  else if((digitalRead(ir1) == HIGH) && (digitalRead(ir2) == LOW)){
+    tl();
+  }
+  else if((digitalRead(ir1) == HIGH) && (digitalRead(ir2) == HIGH)){
+    stopMotor();
+  }
+  else {
+    ultra();
+    
+  }
+
+  }
+  
+  
+
+  
+    
+  
+
+  
+ 
+
+  
+ 
+
+}
